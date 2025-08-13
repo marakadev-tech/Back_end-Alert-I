@@ -59,10 +59,43 @@ public class UserService {
     }
 
     /**
+     * Récupère un utilisateur par son numéro de téléphone
+     */
+
+    public Optional<User> findByNumTel(String numTel) {
+        String endpoint = supabaseUrl + "/rest/v1/users?num_tel=eq." + numTel;
+
+        HttpHeaders headers = getHeaders();
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<User[]> response = restTemplate.exchange(
+                    endpoint, HttpMethod.GET, entity, User[].class);
+
+            if (response.getBody() != null && response.getBody().length > 0) {
+                return Optional.of(response.getBody()[0]);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Erreur findByNumTel Supabase : " + e.getMessage());
+        }
+
+        return Optional.empty();
+    }
+
+    /**
      * Vérifie les identifiants
      */
     public boolean authenticate(String email, String password) {
         Optional<User> optionalUser = findByEmail(email);
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            return user.getPassword().equals(password);
+        }
+        return false;
+    }
+    public boolean mobileAuthenticate(String num_tel, String password) {
+        Optional<User> optionalUser = findByNumTel(num_tel);
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
