@@ -47,4 +47,14 @@ public class MobileApiJwtService {
     private Key getSignInKey() {
         return Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY));
     }
+
+    public String extractUsername(String token) {
+        return Jwts.parser()
+                .setSigningKey(SECRET_KEY)
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+
 }

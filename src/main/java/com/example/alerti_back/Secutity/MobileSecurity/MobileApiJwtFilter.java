@@ -48,4 +48,5 @@ public class MobileApiJwtFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
+
 }
