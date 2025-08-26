@@ -48,7 +48,7 @@ public class SupabaseService {
         // Envoi de chaque entrée historique
         for (HistoryEntry entry : sensor.getHistory()) {
             Map<String, Object> history = new HashMap<>();
-            history.put("id", UUID.randomUUID().toString());
+
             history.put("sensor_id", sensor.getId());
             history.put("timestamp", isoFormat.format(entry.getTimestamp()));
             history.put("temperature", entry.getTemperature());

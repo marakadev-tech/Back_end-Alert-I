@@ -9,6 +9,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +24,7 @@ public class QuizService {
     @Value("${supabase.key}")
     private String supabaseKey;
 
-    private  final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public void addQuiz(Quiz quiz) {
         // 1. Ajouter le quiz
@@ -44,7 +46,8 @@ public class QuizService {
                 quizUrl,
                 HttpMethod.POST,
                 quizRequest,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                }
         );
 
         int quizId = (Integer) quizResponse.getBody().get(0).get("id");
@@ -63,7 +66,8 @@ public class QuizService {
                     questionUrl,
                     HttpMethod.POST,
                     questionRequest,
-                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    }
             );
 
             int questionId = (Integer) questionResponse.getBody().get(0).get("id");
@@ -85,7 +89,8 @@ public class QuizService {
                         reponseUrl,
                         HttpMethod.POST,
                         reponseRequest,
-                        new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                        new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                        }
                 );
             }
         }
@@ -112,7 +117,8 @@ public class QuizService {
                 questionUrl,
                 HttpMethod.POST,
                 questionRequest,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                }
         );
 
         int questionId = (Integer) questionResponse.getBody().get(0).get("id");
@@ -132,9 +138,73 @@ public class QuizService {
                     reponseUrl,
                     HttpMethod.POST,
                     reponseRequest,
-                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    }
             );
         }
     }
+
+    // Ma méthode pour récuperer les quiz
+    public List<Quiz> getAllQuiz() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("apikey", supabaseKey);
+        headers.set("Authorization", "Bearer" + supabaseKey);
+        headers.set("Accept", "application/json");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String url = supabaseUrl + "/rest/v1/quiz?select=*";
+
+        ResponseEntity<Quiz[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Quiz[].class
+        );
+        return Arrays.asList(response.getBody());
+    }
+
+    public List<Questions> getQuestionsByQuizId (String quizId){
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("apikey", supabaseKey);
+        headers.set("Authorization", "Bearer" + supabaseKey);
+        headers.set("Accept", "application/json" );
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String url = supabaseUrl +"/rest/v1/questions?quiz_id=eq." + quizId + "&select=*";
+
+        ResponseEntity<Questions[]> response= restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Questions[].class
+        );
+        return Arrays.asList(response.getBody());
+
+    }
+
+    public List<Reponses> getReponsesByQuestions (String questionId) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("apikey", supabaseKey);
+        headers.set("Authorization", "Bearer" + supabaseKey);
+        headers.set("Accept", "application/json");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String url = supabaseUrl + "/rest/v1/reponses?question_id=eq." + questionId + "&select=*";
+
+        ResponseEntity<Reponses[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Reponses[].class
+        );
+    return Arrays.asList(response.getBody());
+
+    }
+
+
 
 }

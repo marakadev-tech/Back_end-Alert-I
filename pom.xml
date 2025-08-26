@@ -131,6 +131,29 @@
 			<version>8.31.1</version>
 		</dependency>
 
+			<!-- Spring WebFlux -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-webflux</artifactId>
+			</dependency>
+
+			<!-- Reactor Core (pour Mono / Flux) -->
+			<dependency>
+				<groupId>io.projectreactor</groupId>
+				<artifactId>reactor-core</artifactId>
+			</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
+
+
+
+
+
+
+
 	</dependencies>
 
 	<build>

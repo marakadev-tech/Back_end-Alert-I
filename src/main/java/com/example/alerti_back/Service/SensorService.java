@@ -18,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -152,5 +153,36 @@ public class SensorService {
 
         return response.getBody() != null && response.getBody().length > 0 ? response.getBody()[0] : null;
     }
+
+    //Parametrage du capteur
+
+    public Sensors updateSensorThreshold(String sensorId, Double nouveauSeuil) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("apikey", supabaseKey);
+        headers.set("Authorization", "Bearer " + supabaseKey);
+        headers.set("Prefer", "return=representation");
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+
+        // Payload contenant uniquement le champ à modifier
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("seuilniveauEau", nouveauSeuil);
+        payload.put("updated_at", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+                .format(new Date())); // mise à jour automatique
+
+        // Requête PATCH vers Supabase
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+        String url = supabaseUrl + "/rest/v1/sensors?id=eq." + sensorId;
+
+        ResponseEntity<Sensors[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.PATCH,
+                request,
+                Sensors[].class
+        );
+
+        return response.getBody() != null && response.getBody().length > 0 ? response.getBody()[0] : null;
+    }
+
 
 }

@@ -2,6 +2,7 @@ package com.example.alerti_back.Controller;
 
 import com.example.alerti_back.Model.User;
 import com.example.alerti_back.Service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -12,13 +13,18 @@ public class AuthController {
 
     private final AuthService authService;
 
+
+
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
     @PostMapping("/register")
     public Map<String, String> register(@RequestBody User user) {
+        System.out.println("📥 Reçu une requête d'inscription : " + user.getEmail());
+
         boolean created = authService.register(user);
+
         if (created) {
             return Map.of("message", "Utilisateur créé avec succès");
         } else {

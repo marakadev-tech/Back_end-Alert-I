@@ -40,10 +40,19 @@ public class SensorsController {
         return ResponseEntity.ok(sensorService.getHistoryBySensorId(id));
     }
 
+    // Endpoint pour récupérer filtré l’historique d’un capteur donné
     @GetMapping("/{id}/history-by-date")
     public List<HistoryEntry> getHistoryByDate(
             @PathVariable("id") String sensorId,
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return sensorService.getHistoryBySensorIdAndDate(sensorId, date);
+    }
+
+    @PatchMapping("/{sensorId}/seuil")
+    public Sensors updateSeuil(
+            @PathVariable String sensorId,
+            @RequestParam("value") Double seuil) {
+
+        return sensorService.updateSensorThreshold(sensorId, seuil);
     }
 }

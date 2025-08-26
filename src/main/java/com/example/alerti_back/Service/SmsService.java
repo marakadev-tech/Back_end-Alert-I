@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SmsService {
 
-    @Value("${twilio.accountSid}")
+/** @Value("${twilio.accountSid}")
     private String accountSid;
 
     @Value("${twilio.authToken}")
@@ -45,5 +45,5 @@ public class SmsService {
             System.err.println("❌ Erreur envoi SMS à " + to + " : " + e.getMessage());
             return false;
         }
-    }
+    }*/
 }
