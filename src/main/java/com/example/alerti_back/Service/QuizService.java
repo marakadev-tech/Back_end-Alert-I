@@ -26,6 +26,31 @@ public class QuizService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+     public void addOnlyQuiz(Quiz quiz){
+
+         String quizUrl = supabaseUrl + "/rest/v1/quiz";
+
+         HttpHeaders headers = new HttpHeaders();
+         headers.setContentType(MediaType.APPLICATION_JSON);
+         headers.set("apikey", supabaseKey);
+         headers.set("Authorization", "Bearer " + supabaseKey);
+         headers.set("Prefer", "return=representation");
+
+         Map<String, Object> quizbody=new HashMap<>();
+         quizbody.put("description", quiz.getDescription());
+
+         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(quizbody, headers);
+
+         ResponseEntity<Quiz[]> response= restTemplate.exchange(
+                 quizUrl,
+                 HttpMethod.POST,
+                 requestEntity,
+                 Quiz[].class
+         );
+
+
+    }
+
     public void addQuiz(Quiz quiz) {
         // 1. Ajouter le quiz
         String quizUrl = supabaseUrl + "/rest/v1/quiz";

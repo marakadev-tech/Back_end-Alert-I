@@ -8,7 +8,9 @@ import com.example.alerti_back.Service.QuizService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/quiz")
@@ -23,17 +25,36 @@ public class QuizController {
         this.quizService = sensorService;
     }
 
+    @PostMapping("/addonlyquiz")
+    public ResponseEntity<Map<String, String>> onlyquiz(@RequestBody Quiz quiz) {
+        quizService.addOnlyQuiz(quiz);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Quiz ajouté avec succès");
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
+
     @PostMapping("/add-quiz")
     public ResponseEntity<?> addQuiz(@RequestBody Quiz quiz) {
         quizService.addQuiz(quiz);
         return ResponseEntity.ok("Quiz ajouté avec succès");
     }
 
+
+
     @PostMapping("/{quizId}/add-question")
-    public ResponseEntity<String> addQuestionToQuiz(@PathVariable int quizId, @RequestBody Questions question) {
+    public ResponseEntity<Map<String, String>> addQuestionToQuiz(@PathVariable int quizId, @RequestBody Questions question) {
         quizService.addQuestionToQuiz(quizId, question);
-        return ResponseEntity.ok("Question ajoutée avec succès !");
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Question ajoutée avec succès !");
+        return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/getAllquiz")
     public ResponseEntity<List<Quiz>>getAllquiz(){

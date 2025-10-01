@@ -2,9 +2,13 @@ package com.example.alerti_back.Controller;
 
 import com.example.alerti_back.Model.User;
 import com.example.alerti_back.Service.AuthService;
+import com.example.alerti_back.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -12,6 +16,9 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+
+
+
 
 
 
@@ -37,4 +44,6 @@ public class AuthController {
         String token = authService.login(loginData.get("email"), loginData.get("password"));
         return Map.of("token", token);
     }
+
+
 }

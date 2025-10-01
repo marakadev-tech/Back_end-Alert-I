@@ -3,6 +3,7 @@ package com.example.alerti_back.Service;
 import com.example.alerti_back.Model.HistoryEntry;
 import com.example.alerti_back.Model.Sensors;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -98,6 +99,45 @@ public class SupabaseService {
         }
 
         return Optional.empty();
+    }
+
+    // Ajoutez cette méthode dans votre SupabaseService existant
+
+    /**
+     * Récupère tous les capteurs depuis Supabase
+     */
+    public List<Sensors> getAllSensors() {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("apikey", supabaseKey);
+            headers.set("Authorization", "Bearer " + supabaseKey);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            String url = supabaseUrl + "/rest/v1/sensors?select=*";
+
+            ResponseEntity<List<Sensors>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<List<Sensors>>() {}
+            );
+
+            List<Sensors> sensors = response.getBody();
+            if (sensors != null) {
+                System.out.println("📡 Récupération de " + sensors.size() + " capteur(s) depuis Supabase");
+                return sensors;
+            } else {
+                System.out.println("⚠️ Aucun capteur trouvé dans Supabase");
+                return new ArrayList<>();
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors de la récupération des capteurs : " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
 

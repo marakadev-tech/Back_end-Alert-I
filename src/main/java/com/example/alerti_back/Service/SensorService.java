@@ -1,11 +1,10 @@
 package com.example.alerti_back.Service;
 
 import com.example.alerti_back.Model.HistoryEntry;
+import com.example.alerti_back.Model.RainForecast;
 import com.example.alerti_back.Model.Sensors;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
-import com.google.firebase.cloud.FirestoreClient;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -19,10 +18,13 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
 
-import java.util.stream.Collectors;
+
 
 @Service
 public class SensorService {
+
+    @Autowired
+    private WeatherSchedulerService weatherSchedulerService;
 
     // Injecte l'URL Supabase depuis application.properties
     @Value("${supabase.url}")
@@ -184,5 +186,174 @@ public class SensorService {
         return response.getBody() != null && response.getBody().length > 0 ? response.getBody()[0] : null;
     }
 
+    // Ajoutez ces méthodes à votre SensorService existant
+
+
+
+    /**
+     * Récupère tous les capteurs avec leurs prévisions météo actuelles
+     */
+    public List<Map<String, Object>> getAllSensorsWithForecast() {
+        List<Sensors> sensors = getAllSensors();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Sensors sensor : sensors) {
+            Map<String, Object> sensorData = new HashMap<>();
+
+            // Informations du capteur
+            sensorData.put("id", sensor.getId());
+            sensorData.put("statut", sensor.getStatut());
+            sensorData.put("localite", sensor.getLocalite());
+            sensorData.put("latitude", sensor.getLatitude());
+            sensorData.put("longitude", sensor.getLongitude());
+            sensorData.put("dernierDonneeCaptemperature", sensor.getDernierDonneeCaptemperature());
+            sensorData.put("dernierDonneeCapniveauEau", sensor.getDernierDonneeCapniveauEau());
+            sensorData.put("dernierDonneevitesseDuVent", sensor.getDernierDonneevitesseDuVent());
+            sensorData.put("seuilniveauEau", sensor.getSeuilniveauEau());
+            sensorData.put("timestamp", sensor.getTimestamp());
+            sensorData.put("updatedAt", sensor.getUpdatedAt());
+
+            // Récupérer les prévisions météo
+            RainForecast forecast = weatherSchedulerService.getCurrentForecast(sensor.getId());
+            if (forecast != null) {
+                Map<String, Object> forecastData = new HashMap<>();
+                forecastData.put("pluiePrevue", forecast.getPluiePrevue());
+                forecastData.put("forecastFrom", forecast.getForecastFrom());
+                forecastData.put("forecastTo", forecast.getForecastTo());
+                forecastData.put("createdAt", forecast.getCreatedAt());
+                sensorData.put("forecast", forecastData);
+            } else {
+                sensorData.put("forecast", null);
+            }
+
+            // Calculer l'état d'alerte basé sur le niveau d'eau et le seuil
+            String alertStatus = calculateAlertStatus(sensor);
+            sensorData.put("alertStatus", alertStatus);
+
+            result.add(sensorData);
+        }
+
+        return result;
+    }
+
+    /**
+     * Récupère un capteur spécifique avec toutes ses informations détaillées
+     */
+    public Map<String, Object> getSensorDetails(String sensorId) {
+        List<Sensors> sensors = getAllSensors();
+        Sensors sensor = sensors.stream()
+                .filter(s -> s.getId().equals(sensorId))
+                .findFirst()
+                .orElse(null);
+
+        if (sensor == null) {
+            return null;
+        }
+
+        Map<String, Object> sensorData = new HashMap<>();
+
+        // Informations du capteur
+        sensorData.put("id", sensor.getId());
+        sensorData.put("statut", sensor.getStatut());
+        sensorData.put("localite", sensor.getLocalite());
+        sensorData.put("latitude", sensor.getLatitude());
+        sensorData.put("longitude", sensor.getLongitude());
+        sensorData.put("dernierDonneeCaptemperature", sensor.getDernierDonneeCaptemperature());
+        sensorData.put("dernierDonneeCapniveauEau", sensor.getDernierDonneeCapniveauEau());
+        sensorData.put("dernierDonneevitesseDuVent", sensor.getDernierDonneevitesseDuVent());
+        sensorData.put("seuilniveauEau", sensor.getSeuilniveauEau());
+        sensorData.put("timestamp", sensor.getTimestamp());
+        sensorData.put("updatedAt", sensor.getUpdatedAt());
+
+        // Récupérer les prévisions météo
+        weatherSchedulerService.updateForecastIfNeeded(sensorId);
+        RainForecast forecast = weatherSchedulerService.getCurrentForecast(sensorId);
+        if (forecast != null) {
+            Map<String, Object> forecastData = new HashMap<>();
+            forecastData.put("pluiePrevue", forecast.getPluiePrevue());
+            forecastData.put("forecastFrom", forecast.getForecastFrom());
+            forecastData.put("forecastTo", forecast.getForecastTo());
+            forecastData.put("createdAt", forecast.getCreatedAt());
+            sensorData.put("forecast", forecastData);
+        } else {
+            sensorData.put("forecast", null);
+        }
+
+        // Récupérer l'historique récent (dernières 24h)
+        LocalDate today = LocalDate.now();
+        List<HistoryEntry> recentHistory = getHistoryBySensorIdAndDate(sensorId, today);
+        sensorData.put("recentHistory", recentHistory);
+
+        // Calculer l'état d'alerte
+        String alertStatus = calculateAlertStatus(sensor);
+        sensorData.put("alertStatus", alertStatus);
+
+        // Calculer des statistiques additionnelles
+        Map<String, Object> stats = calculateSensorStats(sensor, recentHistory);
+        sensorData.put("statistics", stats);
+
+        return sensorData;
+    }
+
+    /**
+     * Calcule l'état d'alerte d'un capteur
+     */
+    private String calculateAlertStatus(Sensors sensor) {
+        if (sensor.getDernierDonneeCapniveauEau() == null || sensor.getSeuilniveauEau() == null) {
+            return "INCONNU";
+        }
+
+        double niveauEau = sensor.getDernierDonneeCapniveauEau();
+        double seuil = sensor.getSeuilniveauEau();
+
+        if (niveauEau >= seuil * 0.9) {
+            return "CRITIQUE";
+        } else if (niveauEau >= seuil * 0.7) {
+            return "ALERTE";
+        } else if (niveauEau >= seuil * 0.5) {
+            return "SURVEILLANCE";
+        } else {
+            return "NORMAL";
+        }
+    }
+
+    /**
+     * Calcule des statistiques pour un capteur
+     */
+    private Map<String, Object> calculateSensorStats(Sensors sensor, List<HistoryEntry> history) {
+        Map<String, Object> stats = new HashMap<>();
+
+        if (history != null && !history.isEmpty()) {
+            double avgTemp = history.stream()
+                    .filter(h -> h.getTemperature() != null)
+                    .mapToDouble(HistoryEntry::getTemperature)
+                    .average()
+                    .orElse(0.0);
+
+            double avgWaterLevel = history.stream()
+                    .filter(h -> h.getNiveauEau() != null)
+                    .mapToDouble(HistoryEntry::getNiveauEau)
+                    .average()
+                    .orElse(0.0);
+
+            double avgWindSpeed = history.stream()
+                    .filter(h -> h.getVitesseDuVent() != null)
+                    .mapToDouble(HistoryEntry::getVitesseDuVent)
+                    .average()
+                    .orElse(0.0);
+
+            stats.put("avgTemperature24h", Math.round(avgTemp * 100.0) / 100.0);
+            stats.put("avgWaterLevel24h", Math.round(avgWaterLevel * 100.0) / 100.0);
+            stats.put("avgWindSpeed24h", Math.round(avgWindSpeed * 100.0) / 100.0);
+            stats.put("totalMeasurements24h", history.size());
+        } else {
+            stats.put("avgTemperature24h", null);
+            stats.put("avgWaterLevel24h", null);
+            stats.put("avgWindSpeed24h", null);
+            stats.put("totalMeasurements24h", 0);
+        }
+
+        return stats;
+    }
 
 }

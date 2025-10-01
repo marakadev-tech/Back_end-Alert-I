@@ -1,10 +1,8 @@
 package com.example.alerti_back.Service;
 
 import com.example.alerti_back.Model.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.slf4j.Logger;
@@ -123,5 +121,34 @@ public class UserService {
         headers.set("Authorization", "Bearer " + supabaseKey);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         return headers;
+    }
+
+    public List<User> getAllUser() {
+
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.set("apikey", supabaseKey);
+        headers.set("Authorization", "Bearer " + supabaseKey);
+        headers.set("Accept", "application/json");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        String url = supabaseUrl + "/rest/v1/users?select=*";
+
+        try {
+            ResponseEntity<User[]> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    User[].class
+            );
+
+            User[] users = response.getBody();
+            return users != null ? Arrays.asList(users) : Collections.emptyList();
+
+        } catch (Exception e) {
+            // Log ou rethrow propre
+            throw new RuntimeException("Erreur lors de la récupération des utilisateurs", e);
+        }
     }
 }

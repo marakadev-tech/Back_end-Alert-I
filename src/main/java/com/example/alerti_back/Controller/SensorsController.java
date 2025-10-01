@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sensors")
@@ -55,4 +56,29 @@ public class SensorsController {
 
         return sensorService.updateSensorThreshold(sensorId, seuil);
     }
+
+    // Ajoutez ces endpoints à votre SensorsController existant
+
+    /**
+     * Endpoint pour récupérer tous les capteurs avec leurs prévisions météo
+     */
+    @GetMapping("/with-forecast")
+    public ResponseEntity<List<Map<String, Object>>> getAllSensorsWithForecast() {
+        return ResponseEntity.ok(sensorService.getAllSensorsWithForecast());
+    }
+
+    /**
+     * Endpoint pour récupérer les détails complets d'un capteur spécifique
+     */
+    @GetMapping("/{id}/details")
+    public ResponseEntity<Map<String, Object>> getSensorDetails(@PathVariable String id) {
+        Map<String, Object> sensorDetails = sensorService.getSensorDetails(id);
+
+        if (sensorDetails == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(sensorDetails);
+    }
+
 }
