@@ -28,10 +28,10 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copier le JAR depuis l'étape de build
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/Alerti_back-*.jar app.jar
 
 # Exposer le port (Railway définira $PORT)
 EXPOSE 8080
 
 # Commande de démarrage
-ENTRYPOINT ["java", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]
