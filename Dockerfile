@@ -16,11 +16,8 @@ RUN chmod +x mvnw
 # Télécharger les dépendances (pour le cache Docker)
 RUN ./mvnw dependency:go-offline -B
 
-# Copier le code source
+# Copier le code source (application-prod.properties sera inclus)
 COPY src src
-
-# Copier le fichier application.properties explicitement
-COPY src/main/resources/application.properties src/main/resources/application.properties
 
 # Builder l'application
 RUN ./mvnw clean package -DskipTests
