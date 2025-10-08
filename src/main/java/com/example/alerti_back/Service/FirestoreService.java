@@ -12,6 +12,7 @@ import com.google.firebase.cloud.FirestoreClient;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,23 +21,46 @@ import java.util.List;
 
 @Service
 public class FirestoreService {
+    
+    private boolean firebaseInitialized = false;
+    
     @PostConstruct
-    public void init() throws IOException {
-        if (FirebaseApp.getApps().isEmpty()) {
-            FileInputStream serviceAccount =
-                    new FileInputStream("src/main/resources/firebase/serviceAccountKey.json");
+    public void init() {
+        try {
+            if (FirebaseApp.getApps().isEmpty()) {
+                File serviceAccountFile = new File("src/main/resources/firebase/serviceAccountKey.json");
+                
+                // Vérifier si le fichier existe (optionnel en production)
+                if (!serviceAccountFile.exists()) {
+                    System.out.println("⚠️ Firebase serviceAccountKey.json non trouvé - Firestore désactivé");
+                    firebaseInitialized = false;
+                    return;
+                }
+                
+                FileInputStream serviceAccount = new FileInputStream(serviceAccountFile);
 
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .build();
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                        .build();
 
-            FirebaseApp.initializeApp(options);
-            System.out.println("✅ Firebase initialisé !");
-        } else {
-            System.out.println("⚠️ Firebase déjà initialisé.");
+                FirebaseApp.initializeApp(options);
+                firebaseInitialized = true;
+                System.out.println("✅ Firebase initialisé !");
+            } else {
+                firebaseInitialized = true;
+                System.out.println("⚠️ Firebase déjà initialisé.");
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Erreur initialisation Firebase (non bloquant): " + e.getMessage());
+            firebaseInitialized = false;
         }
     }
     public Sensors getSensorWithHistory(String sensorId) throws Exception {
+        if (!firebaseInitialized) {
+            System.err.println("⚠️ Firebase non initialisé - getSensorWithHistory ignoré");
+            return null;
+        }
+        
         Firestore db = FirestoreClient.getFirestore();
         DocumentReference docRef = db.collection("sensors").document(sensorId);
         DocumentSnapshot snapshot = docRef.get().get();
