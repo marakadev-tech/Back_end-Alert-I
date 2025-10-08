@@ -1,0 +1,14 @@
+target/
+.git/
+.idea/
+.vscode/
+.DS_Store
+*.log
+paho*/
+.fastRequest/
+fastRequestExport/
+src/main/resources/application.properties
+src/main/resources/firebase/serviceAccountKey.json
+railway-setup.sh
+README.md
+*.md
