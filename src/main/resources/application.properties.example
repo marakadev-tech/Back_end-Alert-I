@@ -1,5 +1,5 @@
-# Port de l'application
-server.port=8086
+# Port de l'application (Railway définit automatiquement PORT)
+server.port=${PORT:8086}
 
 # Nom de l'application
 spring.application.name=Alerti_back
