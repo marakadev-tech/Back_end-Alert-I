@@ -19,13 +19,18 @@ RUN ./mvnw dependency:go-offline -B
 # Copier le code source
 COPY src src
 
+# Copier le fichier application.properties explicitement
+COPY src/main/resources/application.properties src/main/resources/application.properties
+
 # Builder l'application
 RUN ./mvnw clean package -DskipTests
 
-# Vérifier que le JAR a été créé
+# Vérifier que le JAR a été créé et son contenu
 RUN ls -la target/ && \
     echo "Contenu du répertoire target:" && \
-    find target -name "*.jar" -type f
+    find target -name "*.jar" -type f && \
+    echo "Vérification du contenu du JAR:" && \
+    jar tf target/Alerti_back-*.jar | grep application.properties
 
 # Image finale légère
 FROM eclipse-temurin:17-jre-alpine
@@ -38,5 +43,5 @@ COPY --from=build /app/target/*.jar app.jar
 # Exposer le port (Railway définira $PORT)
 EXPOSE 8080
 
-# Commande de démarrage
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]
+# Commande de démarrage avec profil production
+ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=prod -Dserver.port=${PORT:-8080} -jar app.jar"]
