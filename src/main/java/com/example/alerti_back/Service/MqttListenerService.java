@@ -17,16 +17,16 @@ import java.util.Map;
 @Service
 public class MqttListenerService {
 
-    @Value("${mqtt.broker}")
+    @Value("${mqtt.broker:}")
     private String mqttBroker;
 
-    @Value("${mqtt.topic}")
+    @Value("${mqtt.topic:}")
     private String mqttTopic;
 
-    @Value("${mqtt.username}")
+    @Value("${mqtt.username:}")
     private String mqttUsername;
 
-    @Value("${mqtt.password}")
+    @Value("${mqtt.password:}")
     private String mqttPassword;
     private MqttClient client;
 

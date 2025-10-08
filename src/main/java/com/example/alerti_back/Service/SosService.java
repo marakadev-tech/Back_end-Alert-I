@@ -16,10 +16,10 @@ import java.util.*;
 @Service
 public class SosService {
 
-    @Value("${supabase.url}")
+    @Value("${supabase.url:}")
     private String supabaseUrl;
 
-    @Value("${supabase.key}")
+    @Value("${supabase.key:}")
     private String supabaseKey;
 
     @Autowired

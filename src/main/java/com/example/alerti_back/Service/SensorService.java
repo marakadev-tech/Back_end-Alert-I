@@ -3,9 +3,6 @@ package com.example.alerti_back.Service;
 import com.example.alerti_back.Model.HistoryEntry;
 import com.example.alerti_back.Model.Sensors;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
-import com.google.firebase.cloud.FirestoreClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -18,17 +15,16 @@ import org.springframework.web.client.RestTemplate;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class SensorService {
 
     // Injecte l'URL Supabase depuis application.properties
-    @Value("${supabase.url}")
+    @Value("${supabase.url:}")
     private String supabaseUrl;
 
     // Injecte la clé d'API Supabase
-    @Value("${supabase.key}")
+    @Value("${supabase.key:}")
     private String supabaseKey;
     // Utilisé pour faire des requêtes HTTP
     private final RestTemplate restTemplate = new RestTemplate();

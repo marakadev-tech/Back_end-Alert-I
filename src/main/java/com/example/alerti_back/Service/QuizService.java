@@ -16,10 +16,10 @@ import java.util.Map;
 @Service
 public class QuizService {
 
-    @Value("https://wpmowqykjelftkptiquf.supabase.co")
+    @Value("${supabase.url:https://wpmowqykjelftkptiquf.supabase.co}")
     private String supabaseUrl;
 
-    @Value("${supabase.key}")
+    @Value("${supabase.key:}")
     private String supabaseKey;
 
     private  final RestTemplate restTemplate = new RestTemplate();

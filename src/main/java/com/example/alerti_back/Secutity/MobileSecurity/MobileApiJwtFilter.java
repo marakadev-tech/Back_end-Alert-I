@@ -1,6 +1,5 @@
 package com.example.alerti_back.Secutity.MobileSecurity;
 
-import com.example.alerti_back.Secutity.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

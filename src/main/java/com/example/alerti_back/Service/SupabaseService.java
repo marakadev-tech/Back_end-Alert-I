@@ -14,10 +14,10 @@ import java.util.Date;
 @Service
 public class SupabaseService {
 
-    @Value("${supabase.url}")
+    @Value("${supabase.url:}")
     private String supabaseUrl;
 
-    @Value("${supabase.key}")
+    @Value("${supabase.key:}")
     private String supabaseKey;
 
     private final RestTemplate restTemplate = new RestTemplate();

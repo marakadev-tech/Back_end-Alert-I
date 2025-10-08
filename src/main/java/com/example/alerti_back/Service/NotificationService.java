@@ -26,10 +26,10 @@ public class NotificationService {
     @Value("${aws.lambda.api.key:}")
     private String apiKey;
     
-    @Value("${supabase.url}")
+    @Value("${supabase.url:}")
     private String supabaseUrl;
 
-    @Value("${supabase.key}")
+    @Value("${supabase.key:}")
     private String supabaseKey;
 
     private final RestTemplate restTemplate = new RestTemplate();

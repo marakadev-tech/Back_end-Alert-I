@@ -15,7 +15,7 @@ import java.util.Map;
 @Service
 public class WeatherService {
 
-    @Value("${openweathermap.api-key}")
+    @Value("${openweathermap.api-key:}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();

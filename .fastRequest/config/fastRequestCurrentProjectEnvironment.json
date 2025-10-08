@@ -1,0 +1,14 @@
+{
+	"apifoxRelationMap":{},
+	"apifoxServerMap":{},
+	"environment":{
+		"local":[
+			{
+				"enabled":true,
+				"type":"Authorization",
+				"value":"Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4Mzg1NjIwMyIsImlhdCI6MTc1NTYxNDc5MywiZXhwIjoxNzU1NzAxMTkzfQ.ev7w-az6Nkc0W1XIZUQ8yuMNaOEHUiLTQZxfrO8VW_8"
+			}
+		]
+	},
+	"pmRelationMap":{}
+}
