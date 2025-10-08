@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 
 @Service
 public class SupabaseService {
@@ -29,6 +30,9 @@ public class SupabaseService {
     }
 
     public void saveSensorData(Sensors sensor) {
+        // Initialiser les valeurs par défaut pour éviter les erreurs null
+        initializeSensorDefaults(sensor);
+        
         Map<String, Object> payload = new HashMap<>();
         payload.put("id", sensor.getId());
         payload.put("statut", sensor.getStatut());
@@ -39,24 +43,41 @@ public class SupabaseService {
         payload.put("dernierDonneeCapniveauEau", sensor.getDernierDonneeCapniveauEau());
         payload.put("dernierDonneevitesseDuVent", sensor.getDernierDonneevitesseDuVent());
         payload.put("seuilniveauEau", sensor.getSeuilniveauEau());
-        payload.put("timestamp", isoFormat.format(sensor.getTimestamp()));
-        payload.put("updated_at", isoFormat.format(sensor.getUpdatedAt()));
+        
+        // Champs pluviométrie
+        payload.put("pluviometrieJour", sensor.getPluviometrieJour());
+        payload.put("seuilPluviometrie", sensor.getSeuilPluviometrie());
+        
+        // Dates obligatoires
+        if (sensor.getTimestamp() != null) {
+            payload.put("timestamp", isoFormat.format(sensor.getTimestamp()));
+        } else {
+            payload.put("timestamp", isoFormat.format(new Date()));
+        }
+        
+        if (sensor.getUpdatedAt() != null) {
+            payload.put("updated_at", isoFormat.format(sensor.getUpdatedAt()));
+        } else {
+            payload.put("updated_at", isoFormat.format(new Date()));
+        }
 
         // Envoi vers la table sensors (en mode UPSERT)
         postToSupabase("/rest/v1/sensors", payload);
 
-        // Envoi de chaque entrée historique
-        for (HistoryEntry entry : sensor.getHistory()) {
-            Map<String, Object> history = new HashMap<>();
-            history.put("id", UUID.randomUUID().toString());
-            history.put("sensor_id", sensor.getId());
-            history.put("timestamp", isoFormat.format(entry.getTimestamp()));
-            history.put("temperature", entry.getTemperature());
-            history.put("humidity", entry.getHumidity());
-            history.put("niveau_eau", entry.getNiveauEau());
-            history.put("vitesse_du_vent", entry.getVitesseDuVent());
+        // Envoi de chaque entrée historique (si elle existe)
+        if (sensor.getHistory() != null && !sensor.getHistory().isEmpty()) {
+            for (HistoryEntry entry : sensor.getHistory()) {
+                Map<String, Object> history = new HashMap<>();
+                history.put("id", UUID.randomUUID().toString());
+                history.put("sensor_id", sensor.getId());
+                history.put("timestamp", isoFormat.format(entry.getTimestamp()));
+                history.put("temperature", entry.getTemperature());
+                history.put("humidity", entry.getHumidity());
+                history.put("niveau_eau", entry.getNiveauEau());
+                history.put("vitesse_du_vent", entry.getVitesseDuVent());
 
-            postToSupabase("/rest/v1/history", history);
+                postToSupabase("/rest/v1/history", history);
+            }
         }
     }
 
@@ -100,5 +121,174 @@ public class SupabaseService {
         return Optional.empty();
     }
 
+    /**
+     * Récupère tous les capteurs actifs
+     */
+    public List<Sensors> getAllActiveSensors() {
+        try {
+            String url = supabaseUrl + "/rest/v1/sensors?statut=eq.active&select=*";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("apikey", supabaseKey);
+            headers.set("Authorization", "Bearer " + supabaseKey);
+            headers.set("Content-Type", "application/json");
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Sensors[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Sensors[].class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return Arrays.asList(response.getBody());
+            }
+            
+            return new ArrayList<>();
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erreur récupération capteurs actifs: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Récupère tous les capteurs avec coordonnées GPS
+     */
+    public List<Sensors> getSensorsWithCoordinates() {
+        try {
+            String url = supabaseUrl + "/rest/v1/sensors?and=(statut.eq.active,latitude.not.is.null,longitude.not.is.null)&select=*";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("apikey", supabaseKey);
+            headers.set("Authorization", "Bearer " + supabaseKey);
+            headers.set("Content-Type", "application/json");
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Sensors[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Sensors[].class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return Arrays.asList(response.getBody());
+            }
+            
+            return new ArrayList<>();
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erreur récupération capteurs avec GPS: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Nettoie les anciennes données d'historique
+     */
+    public int cleanupOldHistoryData(int daysToKeep) {
+        try {
+            // Supprimer les entrées d'historique de plus de X jours
+            String url = supabaseUrl + "/rest/v1/sensors?select=id,history";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("apikey", supabaseKey);
+            headers.set("Authorization", "Bearer " + supabaseKey);
+            headers.set("Content-Type", "application/json");
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Sensors[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                Sensors[].class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                int deletedCount = 0;
+                long cutoffTime = System.currentTimeMillis() - (daysToKeep * 24L * 60L * 60L * 1000L);
+                
+                for (Sensors sensor : response.getBody()) {
+                    if (sensor.getHistory() != null && !sensor.getHistory().isEmpty()) {
+                        List<HistoryEntry> filteredHistory = sensor.getHistory().stream()
+                            .filter(entry -> entry.getTimestamp() != null && entry.getTimestamp().getTime() > cutoffTime)
+                            .collect(java.util.stream.Collectors.toList());
+                        
+                        if (filteredHistory.size() != sensor.getHistory().size()) {
+                            sensor.setHistory(filteredHistory);
+                            saveSensorData(sensor);
+                            deletedCount += (sensor.getHistory().size() - filteredHistory.size());
+                        }
+                    }
+                }
+                
+                return deletedCount;
+            }
+            
+            return 0;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erreur nettoyage historique: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Initialise un capteur avec des valeurs par défaut pour éviter les erreurs null
+     */
+    public void initializeSensorDefaults(Sensors sensor) {
+        if (sensor == null) return;
+        
+        // Initialiser les dates si null
+        if (sensor.getTimestamp() == null) {
+            sensor.setTimestamp(new Date());
+        }
+        if (sensor.getUpdatedAt() == null) {
+            sensor.setUpdatedAt(new Date());
+        }
+        
+        // Initialiser l'historique si null
+        if (sensor.getHistory() == null) {
+            sensor.setHistory(new ArrayList<>());
+        }
+        
+        // Initialiser le statut si null
+        if (sensor.getStatut() == null) {
+            sensor.setStatut("active");
+        }
+    }
+
+    /**
+     * Vérifie la santé de la connexion à la base de données
+     */
+    public boolean isHealthy() {
+        try {
+            String url = supabaseUrl + "/rest/v1/sensors?select=count&limit=1";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("apikey", supabaseKey);
+            headers.set("Authorization", "Bearer " + supabaseKey);
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+            );
+            
+            return response.getStatusCode().is2xxSuccessful();
+            
+        } catch (Exception e) {
+            System.err.println("❌ Base de données non accessible: " + e.getMessage());
+            return false;
+        }
+    }
 
 }

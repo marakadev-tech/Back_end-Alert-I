@@ -37,7 +37,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/register", "/auth/login").permitAll()
-                        .requestMatchers("/auth/mobile/register", "/auth/mobile/login","/auth/me").permitAll()
+                        .requestMatchers("/auth/mobile/register", "/auth/mobile/login","/auth/mobile/me").permitAll()
+                        .requestMatchers("/api/notifications/**").permitAll()
+                        .requestMatchers("/api/alerts/**").permitAll()
+                        .requestMatchers("/api/weather/**").permitAll()
+                        .requestMatchers("/api/demo/**").permitAll()
+                        .requestMatchers("/api/sos/signal-anonyme").permitAll()  // Signalements anonymes sans auth
+                        .requestMatchers("/api/sos/types-urgence").permitAll()   // Types d'urgence sans auth
+                        .requestMatchers("/api/sos/priorites").permitAll()       // Priorités sans auth
+                        .requestMatchers("/api/sos/statuts").permitAll()         // Statuts sans auth
+                        .requestMatchers("/api/sos/signaux").permitAll()         // Liste publique sans auth
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

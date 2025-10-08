@@ -34,3 +34,5 @@ build/
 "src/main/resources/firebase/serviceAccountKey.json" 
 "src/main/resources/firebase/serviceAccountKey.json" 
 "src/main/resources/application.properties" 
+src/main/resources/firebase/serviceAccountKey.json
+src/main/resources/application.properties

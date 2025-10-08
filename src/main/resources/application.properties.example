@@ -1,0 +1,38 @@
+# Port de l'application
+server.port=8086
+
+# Nom de l'application
+spring.application.name=Alerti_back
+
+# (Optionnel) Configuration pour Firestore si besoin plus tard
+# firebase.project-id=ton-id-projet
+# firebase.credentials.path=classpath:firebase/serviceAccountKey.json
+
+
+# Indentifiant supabase
+supabase.url=https://wpmowqykjelftkptiquf.supabase.co
+supabase.key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwbW93cXlramVsZnRrcHRpcXVmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzk3NDU0NSwiZXhwIjoyMDY5NTUwNTQ1fQ.E1fR-RYE4Eq-GACe6XWXuHhMO58ydQuTEPTgUg46bI0
+
+mqtt.broker=tcp://44.196.139.190:1884
+mqtt.topic=esp32/data/#
+mqtt.username=alerti
+mqtt.password=alerti
+client-id: spring-boot-client
+mqttCacert=src/main/resources/cert/ca.crt
+
+
+
+# Twilio credentials (à stocker en secure env dans prod)
+twilio.accountSid=YOUR_TWILIO_ACCOUNT_SID
+twilio.authToken=YOUR_TWILIO_AUTH_TOKEN
+twilio.fromNumber=+YOUR_TWILIO_PHONE_NUMBER  # numéro Twilio en E.164
+
+# AWS API Gateway Lambda pour les notifications
+# Remplacez cette URL par l'URL de votre API Gateway
+aws.api-gateway.url=YOUR_AWS_API_GATEWAY_URL
+aws.lambda.api.key=YOUR_AWS_API_GATEWAY_URL
+aws.api-gateway.push-endpoint=/send_notification
+aws.api-gateway.sms-endpoint=/notifications/sms
+
+# OpenWeatherMap 3.0 API key
+openweathermap.api-key=YOUR_OPENWEATHERMAP_API_KEY

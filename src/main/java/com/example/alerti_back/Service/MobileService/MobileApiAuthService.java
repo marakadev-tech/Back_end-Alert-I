@@ -18,7 +18,6 @@ public class MobileApiAuthService {
     public String login(String num_tel, String password) {
         if (userService.mobileAuthenticate(num_tel, password)) {
             User user = userService.findByNumTel(num_tel).get();
-
             return mobileApiJwtService.generateToken(user.getNum_tel());
         }
         throw new RuntimeException("Identifiants invalides");

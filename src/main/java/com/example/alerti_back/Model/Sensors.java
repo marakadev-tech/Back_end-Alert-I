@@ -14,6 +14,10 @@ public class Sensors {
     private Double dernierDonneeCapniveauEau;
     private Double dernierDonneevitesseDuVent;
     private Double seuilniveauEau;
+    
+    // Champs pour la pluviométrie
+    private Double pluviometrieJour;  // Pluviométrie du jour en mm
+    private Double seuilPluviometrie; // Seuil pluviométrique en mm
     private Date timestamp;     // Date et heure de la dernière requête du capteur
     private Date updatedAt;     // Date de mise à jour du document
     private List<HistoryEntry> history;  // Historique des mesures du capteur
@@ -116,6 +120,23 @@ public class Sensors {
 
     public void setHistory(List<HistoryEntry> history) {
         this.history = history;
+    }
+
+    // Getters et Setters pour la pluviométrie
+    public Double getPluviometrieJour() {
+        return pluviometrieJour;
+    }
+
+    public void setPluviometrieJour(Double pluviometrieJour) {
+        this.pluviometrieJour = pluviometrieJour;
+    }
+
+    public Double getSeuilPluviometrie() {
+        return seuilPluviometrie;
+    }
+
+    public void setSeuilPluviometrie(Double seuilPluviometrie) {
+        this.seuilPluviometrie = seuilPluviometrie;
     }
 
 }

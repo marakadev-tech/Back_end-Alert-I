@@ -22,12 +22,12 @@ public class MobileApiJwtService {
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         return claimsResolver.apply(extractAllClaims(token));
     }
-
+    // set Expiration to one year
     public String generateToken(Integer numTel) {
         return Jwts.builder()
                 .setSubject(numTel.toString())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 365))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

@@ -39,7 +39,7 @@ public class MobileApiAuthController {
         return Map.of("token", token);
     }
 
-    @GetMapping("/me")
+    @GetMapping("/mobile/me")
     public ResponseEntity<User> getCurrentUser(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
