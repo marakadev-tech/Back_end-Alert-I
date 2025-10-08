@@ -8,7 +8,6 @@ target/classes/
 target/test-classes/
 target/generated-sources/
 target/generated-test-sources/
-src/main/resources/application.properties
 src/main/resources/firebase/serviceAccountKey.json
 fastRequestExport/
 .fastRequest/

@@ -7,7 +7,6 @@ target/
 paho*/
 .fastRequest/
 fastRequestExport/
-src/main/resources/application.properties
 src/main/resources/firebase/serviceAccountKey.json
 railway-setup.sh
 README.md
