@@ -22,13 +22,18 @@ COPY src src
 # Builder l'application
 RUN ./mvnw clean package -DskipTests
 
+# Vérifier que le JAR a été créé
+RUN ls -la target/ && \
+    echo "Contenu du répertoire target:" && \
+    find target -name "*.jar" -type f
+
 # Image finale légère
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Copier le JAR depuis l'étape de build
-COPY --from=build /app/target/Alerti_back-*.jar app.jar
+# Copier le JAR depuis l'étape de build (utiliser le wildcard pour être sûr)
+COPY --from=build /app/target/*.jar app.jar
 
 # Exposer le port (Railway définira $PORT)
 EXPOSE 8080
