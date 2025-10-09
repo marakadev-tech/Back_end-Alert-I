@@ -70,10 +70,8 @@ public class SosService {
                 
                 System.out.println("✅ Signalement SOS créé avec succès pour l'utilisateur " + sosSignal.getUserId());
                 
-                // Envoyer notifications d'urgence si nécessaire
-                if (sosSignal.isUrgent()) {
-                    envoyerNotificationsUrgence(sosSignal);
-                }
+                // Envoyer les notifications pour tous les signalements SOS
+                envoyerNotificationsUrgence(sosSignal);
                 
                 return sosSignal;
             } else {

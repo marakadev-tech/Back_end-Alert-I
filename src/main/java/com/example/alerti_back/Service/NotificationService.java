@@ -81,10 +81,10 @@ public class NotificationService {
             payload.put("title", "🚨 " + alertLevel.getLabel() + " - " + sensor.getLocalite());
             payload.put("body", buildShortMessage(sensor, alertLevel));
             
-            // Données additionnelles
-            Map<String, Object> data = new HashMap<>();
-            data.put("sensorId", sensor.getId());
-            data.put("localite", sensor.getLocalite());
+            // Données additionnelles - TOUTES les valeurs doivent être des strings pour FCM
+            Map<String, String> data = new HashMap<>();
+            data.put("sensorId", String.valueOf(sensor.getId()));
+            data.put("localite", sensor.getLocalite() != null ? sensor.getLocalite() : "");
             data.put("alertLevel", alertLevel.name());
             data.put("niveauEau", sensor.getDernierDonneeCapniveauEau() != null ? sensor.getDernierDonneeCapniveauEau().toString() : "0");
             data.put("seuilEau", sensor.getSeuilniveauEau() != null ? sensor.getSeuilniveauEau().toString() : "0");
@@ -136,10 +136,10 @@ public class NotificationService {
             payload.put("title", "🚨 " + alertLevel.getLabel() + " - " + sensor.getLocalite());
             payload.put("body", buildShortMessage(sensor, alertLevel));
             
-            // Données additionnelles
-            Map<String, Object> data = new HashMap<>();
-            data.put("sensorId", sensor.getId());
-            data.put("localite", sensor.getLocalite());
+            // Données additionnelles - TOUTES les valeurs doivent être des strings pour FCM
+            Map<String, String> data = new HashMap<>();
+            data.put("sensorId", String.valueOf(sensor.getId()));
+            data.put("localite", sensor.getLocalite() != null ? sensor.getLocalite() : "");
             data.put("alertLevel", alertLevel.name());
             data.put("niveauEau", sensor.getDernierDonneeCapniveauEau() != null ? sensor.getDernierDonneeCapniveauEau().toString() : "0");
             data.put("seuilEau", sensor.getSeuilniveauEau() != null ? sensor.getSeuilniveauEau().toString() : "0");
@@ -556,17 +556,17 @@ public class NotificationService {
         payload.put("title", title);
         payload.put("body", body);
         
-        // Données additionnelles
-        Map<String, Object> data = new HashMap<>();
+        // Données additionnelles - TOUTES les valeurs doivent être des strings pour FCM
+        Map<String, String> data = new HashMap<>();
         data.put("type", "sos_signal");
-        data.put("signalId", sosSignal.getId());
-        data.put("typeUrgence", sosSignal.getTypeUrgence());
-        data.put("description", sosSignal.getDescription());
-        data.put("localite", sosSignal.getLocalite());
+        data.put("signalId", String.valueOf(sosSignal.getId()));
+        data.put("typeUrgence", sosSignal.getTypeUrgence() != null ? sosSignal.getTypeUrgence() : "");
+        data.put("description", sosSignal.getDescription() != null ? sosSignal.getDescription() : "");
+        data.put("localite", sosSignal.getLocalite() != null ? sosSignal.getLocalite() : "");
         data.put("latitude", sosSignal.getLatitude() != null ? sosSignal.getLatitude().toString() : "0");
         data.put("longitude", sosSignal.getLongitude() != null ? sosSignal.getLongitude().toString() : "0");
-        data.put("statut", sosSignal.getStatut());
-        data.put("priorite", sosSignal.getPriorite());
+        data.put("statut", sosSignal.getStatut() != null ? sosSignal.getStatut() : "");
+        data.put("priorite", sosSignal.getPriorite() != null ? sosSignal.getPriorite() : "");
         data.put("timestamp", sosSignal.getSignalTimestamp() != null ? sosSignal.getSignalTimestamp().toString() : "");
         data.put("anonyme", sosSignal.isAnonyme() ? "true" : "false");
         
@@ -577,11 +577,18 @@ public class NotificationService {
 
     private boolean sendNotificationToLambda(Map<String, Object> payload, String notificationType) {
         try {
+            System.out.println("🔍 Envoi vers Lambda - Type: " + notificationType);
+            System.out.println("🔍 URL Lambda: " + lambdaUrl);
+            System.out.println("🔍 Payload: " + payload);
+            
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             
-            if (apiKey != null && !apiKey.isEmpty()) {
+            if (apiKey != null && !apiKey.isEmpty() && !apiKey.equals("YOUR_ACTUAL_API_KEY_HERE")) {
                 headers.set("x-api-key", apiKey);
+                System.out.println("🔑 API Key configurée");
+            } else {
+                System.err.println("⚠️ ATTENTION: API Key AWS non configurée ou invalide!");
             }
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
@@ -589,16 +596,42 @@ public class NotificationService {
             ResponseEntity<Map> response = restTemplate.exchange(
                 lambdaUrl, HttpMethod.POST, entity, Map.class);
 
+            System.out.println("🔍 Status Code Lambda: " + response.getStatusCode());
+            System.out.println("🔍 Réponse Lambda complète: " + response.getBody());
+
             if (response.getStatusCode().is2xxSuccessful()) {
+                Map<String, Object> body = response.getBody();
+                if (body != null) {
+                    System.out.println("✅ Success count: " + body.get("successCount"));
+                    System.out.println("❌ Error count: " + body.get("errorCount"));
+                    System.out.println("📋 Message: " + body.get("message"));
+                    
+                    // Afficher les détails des résultats
+                    if (body.containsKey("results")) {
+                        System.out.println("📋 Détails des envois: " + body.get("results"));
+                    }
+                    
+                    // Considérer comme succès si au moins un token a reçu la notification
+                    Object successCount = body.get("successCount");
+                    if (successCount != null && ((Number) successCount).intValue() > 0) {
+                        System.out.println("✅ Notification " + notificationType + " envoyée avec succès à " + successCount + " appareil(s)");
+                        return true;
+                    } else {
+                        System.err.println("❌ Aucun appareil n'a reçu la notification " + notificationType);
+                        return false;
+                    }
+                }
                 System.out.println("✅ Notification " + notificationType + " envoyée avec succès");
                 return true;
             } else {
                 System.err.println("❌ Erreur envoi notification " + notificationType + ": " + response.getStatusCode());
+                System.err.println("❌ Body: " + response.getBody());
                 return false;
             }
 
         } catch (Exception e) {
             System.err.println("❌ Erreur communication Lambda pour " + notificationType + ": " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
