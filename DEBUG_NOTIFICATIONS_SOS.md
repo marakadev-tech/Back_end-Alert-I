@@ -202,3 +202,4 @@ curl -X POST https://aywkpqdshe.execute-api.us-east-1.amazonaws.com/default/send
 4. **Tester manuellement** la Lambda avec curl
 5. **Vérifier les tokens FCM** dans Supabase et dans l'app Flutter
 
+

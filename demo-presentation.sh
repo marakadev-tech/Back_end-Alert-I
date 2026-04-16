@@ -1,17 +1,29 @@
 #!/bin/bash
 
 # Script de démonstration pour la présentation
-# Usage: ./demo-presentation.sh
+# Usage: ./demo-presentation.sh [URL_RAILWAY]
+# Exemple: ./demo-presentation.sh https://mon-app.up.railway.app
 
 echo "🎤 SCRIPT DE DÉMONSTRATION - SYSTÈME D'ALERTES"
 echo "=============================================="
 echo ""
 
 # Configuration
-NGROK_URL="https://linnea-undefaulting-obdulia.ngrok-free.dev"
-HEADERS="-H 'ngrok-skip-browser-warning: true'"
+# Vous pouvez passer l'URL en paramètre ou l'exporter comme variable d'environnement
+if [ ! -z "$1" ]; then
+    RAILWAY_URL="$1"
+    echo "📝 URL Railway fournie en paramètre: $RAILWAY_URL"
+elif [ ! -z "$RAILWAY_URL" ]; then
+    echo "📝 URL Railway depuis variable d'environnement: $RAILWAY_URL"
+else
+    RAILWAY_URL="https://votre-app.up.railway.app"
+    echo "⚠️  URL Railway par défaut (remplacez par la vraie URL): $RAILWAY_URL"
+    echo "   Usage: ./demo-presentation.sh https://mon-app.up.railway.app"
+    echo "   Ou exportez: export RAILWAY_URL=https://mon-app.up.railway.app"
+    echo ""
+fi
 
-echo "🌐 URL du backend: $NGROK_URL"
+echo "🌐 URL du backend Railway: $RAILWAY_URL"
 echo ""
 
 # Fonction pour exécuter une commande curl
@@ -20,7 +32,7 @@ run_curl() {
     local description=$2
     echo "🔄 $description"
     echo "   Endpoint: $endpoint"
-    curl -s -X GET "$NGROK_URL$endpoint" -H "ngrok-skip-browser-warning: true" | jq '.' 2>/dev/null || echo "   Réponse reçue (format non-JSON)"
+    curl -s -X GET "$RAILWAY_URL$endpoint" | jq '.' 2>/dev/null || echo "   Réponse reçue (format non-JSON)"
     echo ""
 }
 

@@ -131,3 +131,4 @@ echo -e "${YELLOW}📝 Vérifiez votre appareil pour voir si les notifications s
 echo -e "${YELLOW}📊 Consultez aussi les logs CloudWatch:${NC}"
 echo "   aws logs tail /aws/lambda/send_notification --follow"
 
+

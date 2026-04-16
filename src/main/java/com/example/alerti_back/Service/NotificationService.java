@@ -44,8 +44,13 @@ public class NotificationService {
      * @return true si l'envoi est réussi
      */
     public boolean sendAlert(Sensors sensor, AlertLevel alertLevel, List<String> recipients) {
+        System.out.println("🔍 DEBUG - Configuration Lambda:");
+        System.out.println("   lambdaUrl: " + (lambdaUrl != null ? lambdaUrl : "NULL"));
+        System.out.println("   apiKey: " + (apiKey != null && !apiKey.isEmpty() ? "CONFIGURÉ" : "NON CONFIGURÉ"));
+        
         if (lambdaUrl == null || lambdaUrl.isEmpty()) {
             System.err.println("⚠️  URL de l'API Gateway Lambda non configurée");
+            System.err.println("   Variable AWS_API_GATEWAY_URL manquante dans Railway");
             return false;
         }
 
@@ -104,6 +109,9 @@ public class NotificationService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
+            System.out.println("🚀 Envoi vers Lambda URL: " + lambdaUrl);
+            System.out.println("📦 Payload: " + payload.toString());
+
             ResponseEntity<Map> response = restTemplate.exchange(
                     lambdaUrl,
                     HttpMethod.POST,
@@ -111,11 +119,15 @@ public class NotificationService {
                     Map.class
             );
 
+            System.out.println("📡 Réponse Lambda - Status: " + response.getStatusCode());
+            System.out.println("📡 Réponse Lambda - Body: " + response.getBody());
+
             if (response.getStatusCode().is2xxSuccessful()) {
                 System.out.println("✅ Notification envoyée avec succès pour le capteur " + sensor.getId() + " vers " + tokens.size() + " tokens");
                 return true;
             } else {
                 System.err.println("⚠️ Échec de l'envoi de notification: " + response.getStatusCode());
+                System.err.println("📡 Réponse complète: " + response.getBody());
                 return false;
             }
 
