@@ -4,6 +4,7 @@ import com.example.alerti_back.Model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -20,6 +21,7 @@ public class UserService {
     private String supabaseKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     /**
      * Sauvegarde un utilisateur dans Supabase (table 'users')
@@ -66,7 +68,8 @@ public class UserService {
      */
 
     public Optional<User> findByNumTel(String numTel) {
-        String endpoint = supabaseUrl + "/rest/v1/users?num_tel=eq." + numTel;
+        String normalizedNumTel = normalizePhone(numTel);
+        String endpoint = supabaseUrl + "/rest/v1/users?num_tel=eq." + normalizedNumTel;
 
         HttpHeaders headers = getHeaders();
         HttpEntity<Void> entity = new HttpEntity<>(headers);
@@ -118,17 +121,43 @@ public class UserService {
             return false;
         }
 
-        if (storedPassword.equals(providedPassword)) {
+        String stored = storedPassword.trim();
+        String provided = providedPassword.trim();
+
+        // 1) Direct match
+        if (stored.equals(provided)) {
             return true;
         }
 
-        String storedAsSha256 = sha256Hex(storedPassword);
-        if (storedAsSha256.equalsIgnoreCase(providedPassword)) {
+        // 2) BCrypt compatibility (legacy or other clients)
+        // If stored value looks like BCrypt, try matching both raw and SHA-256 raw.
+        if (isBcryptHash(stored)) {
+            if (bCryptPasswordEncoder.matches(provided, stored)) {
+                return true;
+            }
+            String providedAsSha256 = sha256Hex(provided);
+            return bCryptPasswordEncoder.matches(providedAsSha256, stored);
+        }
+
+        // 3) SHA-256 / plain compatibility
+        String storedAsSha256 = sha256Hex(stored);
+        if (storedAsSha256.equalsIgnoreCase(provided)) {
             return true;
         }
 
-        String providedAsSha256 = sha256Hex(providedPassword);
-        return providedAsSha256.equalsIgnoreCase(storedPassword);
+        String providedAsSha256 = sha256Hex(provided);
+        return providedAsSha256.equalsIgnoreCase(stored);
+    }
+
+    private boolean isBcryptHash(String value) {
+        return value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$");
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) {
+            return "";
+        }
+        return phone.replaceAll("\\D", "");
     }
 
     private String sha256Hex(String value) {
