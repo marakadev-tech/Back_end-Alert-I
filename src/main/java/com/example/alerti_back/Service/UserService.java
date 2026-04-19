@@ -4,12 +4,8 @@ import com.example.alerti_back.Model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Service
@@ -21,7 +17,6 @@ public class UserService {
     private String supabaseKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     /**
      * Sauvegarde un utilisateur dans Supabase (table 'users')
@@ -96,7 +91,7 @@ public class UserService {
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            return passwordsMatch(user.getPassword(), password);
+            return passwordEquals(user.getPassword(), password);
         }
         return false;
     }
@@ -105,52 +100,17 @@ public class UserService {
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            return passwordsMatch(user.getPassword(), password);
+            return passwordEquals(user.getPassword(), password);
         }
         return false;
     }
 
-    /**
-     * Compatibility matching for legacy users:
-     * - exact match (same format)
-     * - stored plain text vs provided SHA-256 hash
-     * - stored SHA-256 hash vs provided plain text
-     */
-    private boolean passwordsMatch(String storedPassword, String providedPassword) {
+    /** Strict comparison only (same string after trim). */
+    private boolean passwordEquals(String storedPassword, String providedPassword) {
         if (storedPassword == null || providedPassword == null) {
             return false;
         }
-
-        String stored = storedPassword.trim();
-        String provided = providedPassword.trim();
-
-        // 1) Direct match
-        if (stored.equals(provided)) {
-            return true;
-        }
-
-        // 2) BCrypt compatibility (legacy or other clients)
-        // If stored value looks like BCrypt, try matching both raw and SHA-256 raw.
-        if (isBcryptHash(stored)) {
-            if (bCryptPasswordEncoder.matches(provided, stored)) {
-                return true;
-            }
-            String providedAsSha256 = sha256Hex(provided);
-            return bCryptPasswordEncoder.matches(providedAsSha256, stored);
-        }
-
-        // 3) SHA-256 / plain compatibility
-        String storedAsSha256 = sha256Hex(stored);
-        if (storedAsSha256.equalsIgnoreCase(provided)) {
-            return true;
-        }
-
-        String providedAsSha256 = sha256Hex(provided);
-        return providedAsSha256.equalsIgnoreCase(stored);
-    }
-
-    private boolean isBcryptHash(String value) {
-        return value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$");
+        return storedPassword.trim().equals(providedPassword.trim());
     }
 
     private String normalizePhone(String phone) {
@@ -158,24 +118,6 @@ public class UserService {
             return "";
         }
         return phone.replaceAll("\\D", "");
-    }
-
-    private String sha256Hex(String value) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 non supporté", e);
-        }
     }
 
     /**
