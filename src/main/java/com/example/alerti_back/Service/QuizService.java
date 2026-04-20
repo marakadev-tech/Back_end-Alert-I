@@ -16,7 +16,7 @@ import java.util.Map;
 @Service
 public class QuizService {
 
-    @Value("${supabase.url:https://wpmowqykjelftkptiquf.supabase.co}")
+    @Value("${supabase.url:}")
     private String supabaseUrl;
 
     @Value("${supabase.key:}")

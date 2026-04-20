@@ -13,7 +13,7 @@ import java.util.Map;
 @Service
 public class ConseilService {
 
-    @Value("${supabase.url:https://wpmowqykjelftkptiquf.supabase.co}")
+    @Value("${supabase.url:}")
     private String supabaseUrl;
 
     @Value("${supabase.key:}")
