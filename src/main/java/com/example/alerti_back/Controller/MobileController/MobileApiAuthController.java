@@ -24,12 +24,17 @@ public class MobileApiAuthController {
     }
 
     @PostMapping("/mobile/register")
-    public Map<String, String> register(@RequestBody User user) {
-        boolean created = mobileApiAuthService.register(user);
-        if (created) {
-            return Map.of("message", "Utilisateur créé avec succès");
-        } else {
-            return Map.of("message", "Échec de la création de l'utilisateur");
+    public ResponseEntity<Map<String, String>> register(@RequestBody User user) {
+        try {
+            boolean created = mobileApiAuthService.register(user);
+            if (created) {
+                return ResponseEntity.ok(Map.of("message", "Utilisateur créé avec succès"));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Échec de la création de l'utilisateur"));
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
