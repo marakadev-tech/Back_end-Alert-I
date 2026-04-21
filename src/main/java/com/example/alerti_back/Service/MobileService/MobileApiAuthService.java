@@ -29,4 +29,41 @@ public class MobileApiAuthService {
         }
         return userService.saveUser(user);
     }
+
+    /**
+     * Vérifie juste qu'un compte existe pour ce numéro.
+     */
+    public void requestPasswordReset(String numTel) {
+        String normalizedPhone = normalizePhone(numTel);
+        if (normalizedPhone.isEmpty()) {
+            throw new RuntimeException("Numéro de téléphone invalide");
+        }
+        if (userService.findByNumTel(normalizedPhone).isEmpty()) {
+            throw new RuntimeException("Aucun compte associé à ce numéro");
+        }
+    }
+
+    /**
+     * Met à jour le mot de passe sans vérification OTP (temporaire).
+     */
+    public void confirmPasswordReset(String numTel, String newPassword) {
+        String normalizedPhone = normalizePhone(numTel);
+        if (normalizedPhone.isEmpty() || newPassword == null || newPassword.trim().isEmpty()) {
+            throw new RuntimeException("Données de réinitialisation invalides");
+        }
+
+        if (userService.findByNumTel(normalizedPhone).isEmpty()) {
+            throw new RuntimeException("Aucun compte associé à ce numéro");
+        }
+
+        boolean updated = userService.updatePasswordByNumTel(normalizedPhone, newPassword.trim());
+        if (!updated) {
+            throw new RuntimeException("Impossible de mettre à jour le mot de passe");
+        }
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) return "";
+        return phone.replaceAll("\\D", "");
+    }
 }

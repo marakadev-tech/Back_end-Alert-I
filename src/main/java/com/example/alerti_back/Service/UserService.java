@@ -3,6 +3,7 @@ package com.example.alerti_back.Service;
 import com.example.alerti_back.Model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,6 +18,8 @@ public class UserService {
     private String supabaseKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate patchRestTemplate =
+            new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 
     /**
      * Sauvegarde un utilisateur dans Supabase (table 'users')
@@ -103,6 +106,34 @@ public class UserService {
             return passwordEquals(user.getPassword(), password);
         }
         return false;
+    }
+
+    /**
+     * Met à jour le mot de passe d'un utilisateur via son numéro de téléphone.
+     */
+    public boolean updatePasswordByNumTel(String numTel, String newPassword) {
+        String normalizedNumTel = normalizePhone(numTel);
+        String endpoint = supabaseUrl + "/rest/v1/users?num_tel=eq." + normalizedNumTel;
+
+        HttpHeaders headers = getHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Prefer", "return=representation");
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("password", newPassword);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+        try {
+            ResponseEntity<User[]> response = patchRestTemplate.exchange(
+                    endpoint, HttpMethod.PATCH, request, User[].class);
+            return response.getStatusCode().is2xxSuccessful()
+                    && response.getBody() != null
+                    && response.getBody().length > 0;
+        } catch (Exception e) {
+            System.err.println("❌ Erreur updatePasswordByNumTel Supabase : " + e.getMessage());
+            return false;
+        }
     }
 
     /** Strict comparison only (same string after trim). */

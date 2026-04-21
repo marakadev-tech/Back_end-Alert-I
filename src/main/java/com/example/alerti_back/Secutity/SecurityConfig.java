@@ -37,7 +37,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/register", "/auth/login").permitAll()
-                        .requestMatchers("/auth/mobile/register", "/auth/mobile/login","/auth/mobile/me").permitAll()
+                        .requestMatchers(
+                                "/auth/mobile/register",
+                                "/auth/mobile/login",
+                                "/auth/mobile/me",
+                                "/auth/mobile/password/reset/request",
+                                "/auth/mobile/password/reset/confirm"
+                        ).permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
                         .requestMatchers("/api/alerts/**").permitAll()
                         .requestMatchers("/api/weather/**").permitAll()

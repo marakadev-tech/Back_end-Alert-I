@@ -39,6 +39,29 @@ public class MobileApiAuthController {
         return Map.of("token", token);
     }
 
+    @PostMapping("/mobile/password/reset/request")
+    public ResponseEntity<Map<String, String>> requestPasswordReset(@RequestBody Map<String, String> payload) {
+        try {
+            mobileApiAuthService.requestPasswordReset(payload.get("num_tel"));
+            return ResponseEntity.ok(Map.of("message", "Numéro vérifié"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/mobile/password/reset/confirm")
+    public ResponseEntity<Map<String, String>> confirmPasswordReset(@RequestBody Map<String, String> payload) {
+        try {
+            mobileApiAuthService.confirmPasswordReset(
+                    payload.get("num_tel"),
+                    payload.get("new_password")
+            );
+            return ResponseEntity.ok(Map.of("message", "Mot de passe réinitialisé avec succès"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @GetMapping("/mobile/me")
     public ResponseEntity<User> getCurrentUser(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
